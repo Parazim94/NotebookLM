@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { UPLOAD_BUCKET } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
 
 const MAX_TITLE_LENGTH = 100;
@@ -35,10 +36,16 @@ export async function renameNotebook(formData: FormData) {
 }
 
 export async function deleteNotebook(formData: FormData) {
-  const { error } = await createServerClient()
-    .from("notebooks")
-    .delete()
-    .eq("id", readId(formData));
+  const supabase = createServerClient();
+  const id = readId(formData);
+
+  // Dateien im Storage hängen nicht per Cascade am Notebook und müssen separat gelöscht werden
+  const { data: files } = await supabase.storage.from(UPLOAD_BUCKET).list(id);
+  if (files?.length) {
+    await supabase.storage.from(UPLOAD_BUCKET).remove(files.map((f) => `${id}/${f.name}`));
+  }
+
+  const { error } = await supabase.from("notebooks").delete().eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/");
 }

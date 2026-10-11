@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { deleteNotebook, renameNotebook } from "@/app/actions";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,9 @@ export function NotebookCard({ notebook }: { notebook: Notebook }) {
           </form>
         ) : (
           <>
-            <span className="font-medium">{notebook.title}</span>
+            <Link href={`/notebooks/${notebook.id}`} className="flex-1 font-medium hover:underline">
+              {notebook.title}
+            </Link>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setEditing(true)}>
                 Umbenennen
